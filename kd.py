@@ -231,7 +231,6 @@ class KDtree():
                     else:
                         if p_l:
                             prev_prev.rightchild = prev.rightchild
-                            print("HERE")
                         else:
                             prev_prev.rightchild = prev.leftchild
         
