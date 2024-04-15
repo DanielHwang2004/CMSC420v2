@@ -182,10 +182,60 @@ class KDtree():
                         prev.rightchild = NodeLeaf(add_node_leaf)
 
 
+    def delete_helper(self, parent:NodeInternal, p_left:bool, parent_parent:NodeInternal, p_p_left:bool, node:NodeLeaf | NodeInternal, point:tuple[int]):
+        
+        prev_prev = parent_parent
+        prev = parent
+        
+        p_l = p_left
+        p_p_l = p_p_left
+        
+        curr = self.root
+        
+        while isinstance(curr, NodeInternal):
+            
+            p_p_l = p_l
+            
+            prev_prev = prev
+            prev = curr
+            
+            if point[curr.splitindex] < curr.splitvalue:
+                p_l = True
+                curr = curr.leftchild
+            elif point[curr.splitindex] > curr.splitvalue:
+                p_l = False
+                curr = curr.rightchild
+            else:
+                self.delete_helper(prev, p_l, prev_prev, p_p_left, curr.leftchild, point)
+                self.delete_helper(prev, p_l, prev_prev, p_p_left, curr.rightchild, point)
+        
+        curr.data = [datum for datum in curr.data if datum.coords != point]
+        
+        if len(curr.data) == 0:
+            if prev == None:
+                self.root = None
+            elif prev_prev == None:
+                if p_l:
+                    self.root = prev.rightchild
+                else:
+                    self.root = prev.leftchild
+            else:
+                if p_p_l:
+                    if p_l:
+                        prev_prev.leftchild = prev.rightchild
+                    else:
+                        prev_prev.leftchild = prev.leftchild
+                else:
+                    if p_l:
+                        prev_prev.rightchild = prev.rightchild
+                    else:
+                        prev_prev.rightchild = prev.leftchild
+        
     # Delete the Datum with the given point from the tree.
     # The Datum with the given point is guaranteed to be in the tree.
     def delete(self,point:tuple[int]):
-        thisisaplaceholder = True
+        self.delete_helper(None, None, None, None, self.root, point)
+                
 
     # Find the k nearest neighbors to the point.
     def knn(self,k:int,point:tuple[int]) -> str:
