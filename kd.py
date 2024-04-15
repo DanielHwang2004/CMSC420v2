@@ -186,11 +186,10 @@ class KDtree():
         
         prev_prev = parent_parent
         prev = parent
+        curr = node
         
         p_l = p_left
         p_p_l = p_p_left
-        
-        curr = self.root
         
         while isinstance(curr, NodeInternal):
             
@@ -206,30 +205,35 @@ class KDtree():
                 p_l = False
                 curr = curr.rightchild
             else:
-                self.delete_helper(prev, p_l, prev_prev, p_p_left, curr.leftchild, point)
-                self.delete_helper(prev, p_l, prev_prev, p_p_left, curr.rightchild, point)
+                self.delete_helper(prev, True, prev_prev, p_p_l, curr.leftchild, point)
+                self.delete_helper(prev, False, prev_prev, p_p_l, curr.rightchild, point)
+                
+                curr = None
         
-        curr.data = [datum for datum in curr.data if datum.coords != point]
-        
-        if len(curr.data) == 0:
-            if prev == None:
-                self.root = None
-            elif prev_prev == None:
-                if p_l:
-                    self.root = prev.rightchild
-                else:
-                    self.root = prev.leftchild
-            else:
-                if p_p_l:
+        if curr:
+            curr.data = [datum for datum in curr.data if datum.coords != point] 
+            
+            if len(curr.data) == 0:
+                print("c")
+                if prev == None:
+                    self.root = None
+                elif prev_prev == None:
                     if p_l:
-                        prev_prev.leftchild = prev.rightchild
+                        self.root = prev.rightchild
                     else:
-                        prev_prev.leftchild = prev.leftchild
+                        self.root = prev.leftchild
                 else:
-                    if p_l:
-                        prev_prev.rightchild = prev.rightchild
+                    if p_p_l:
+                        if p_l:
+                            prev_prev.leftchild = prev.rightchild
+                        else:
+                            prev_prev.leftchild = prev.leftchild
                     else:
-                        prev_prev.rightchild = prev.leftchild
+                        if p_l:
+                            prev_prev.rightchild = prev.rightchild
+                            print("HERE")
+                        else:
+                            prev_prev.rightchild = prev.leftchild
         
     # Delete the Datum with the given point from the tree.
     # The Datum with the given point is guaranteed to be in the tree.
