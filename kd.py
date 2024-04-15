@@ -41,7 +41,7 @@ class KDtree():
                   splitmethod : str,
                   k           : int,
                   m           : int,
-                  root        : NodeLeaf = None):
+                  root        : (NodeLeaf | NodeInternal | None) = None):
         self.k    = k
         self.m    = m
         self.splitmethod = splitmethod
@@ -67,11 +67,121 @@ class KDtree():
         else:
             dict_repr = _to_dict(self.root)
         return json.dumps(dict_repr,indent=2)
+    
+    def sort_split(self, data:List[Datum], split_coord:int):
+
+        sorted_list = sorted(data, key = lambda d: d.coords[split_coord])
+        
+        midpoint = len(sorted_list) // 2
+        midpoint_val = 0
+        
+        left_node = NodeLeaf(sorted_list[:midpoint])
+        right_node = NodeLeaf(sorted_list[midpoint:])
+        
+        if len(sorted_list) % 2 == 1:
+            midpoint_val = float(sorted_list[midpoint].coords[split_coord])
+        else:
+            midpoint_val = float((sorted_list[midpoint - 1].coords[split_coord] + sorted_list[midpoint].coords[split_coord]) / 2)
+        
+        node_internal = NodeInternal(split_coord, midpoint_val, left_node, right_node)
+
+        return node_internal
+    
+    def overfull_spread(self, leaf:NodeLeaf):
+        split_coord = -1
+        max_split = -1
+        
+        if len(leaf.data) == 5:
+            for i in range(self.k):
+                min_num = leaf.data[0].coords[i]
+                max_num = leaf.data[0].coords[i]
+                for data in leaf.data:
+                    if data.coords[i] < min_num:
+                        min_num = data.coords[i]
+                    elif data.coords[i] > max_num:
+                        max_num = data.coords[i]
+                
+                split = max_num - min_num
+                
+                if split > max_split:
+                    max_split = split
+                    split_coord = i
+        
+        return self.sort_split(leaf.data, split_coord)
+        
+    def overfull_cycle(self, leaf:NodeLeaf, split_coord: int):
+        
+        return self.sort_split(leaf.data, split_coord)
 
     # Insert the Datum with the given code and coords into the tree.
     # The Datum with the given coords is guaranteed to not be in the tree.
     def insert(self,point:tuple[int],code:str):
-        thisisaplaceholder = True
+        
+        if self.root == None:
+            
+            new_datum = Datum(point, code)
+            
+            add_node_leaf = [new_datum]
+            
+            self.root = NodeLeaf(add_node_leaf)
+            
+        else:
+            
+            prev = None
+            curr = self.root
+            
+            go_left = None
+            
+            split_coord = 0
+               
+            while isinstance(curr, NodeInternal):
+                
+                prev = curr
+                
+                split_coord += 1
+                
+                if split_coord == self.k:
+                    split_coord = 0
+                
+                if point[curr.splitindex] < curr.splitvalue:
+                    go_left = True
+                    curr = curr.leftchild
+                else:
+                    go_left = False
+                    curr = curr.rightchild
+            
+            if isinstance(curr, NodeLeaf):
+                
+                new_datum = Datum(point, code)
+                
+                curr.data.append(new_datum)
+                
+                if len(curr.data) > self.m:
+                    if self.splitmethod == "cycle":
+                        curr = self.overfull_cycle(curr, split_coord)
+                    else:
+                        curr = self.overfull_spread(curr)
+                        
+                if prev:
+                    if go_left:
+                        prev.leftchild = curr
+                    else:
+                        prev.rightchild = curr
+                else:
+                    self.root = curr
+            
+            else:
+                
+                new_datum = Datum(point, code)
+            
+                add_node_leaf = [new_datum]
+                
+                if prev:
+                    if go_left:
+                        prev.leftchild = NodeLeaf(add_node_leaf)
+                    else:
+                        prev.rightchild = NodeLeaf(add_node_leaf)
+
 
     # Delete the Datum with the given point from the tree.
     # The Datum with the given point is guaranteed to be in the tree.
