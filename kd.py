@@ -91,21 +91,20 @@ class KDtree():
         split_coord = -1
         max_split = -1
         
-        if len(leaf.data) == 5:
-            for i in range(self.k):
-                min_num = leaf.data[0].coords[i]
-                max_num = leaf.data[0].coords[i]
-                for data in leaf.data:
-                    if data.coords[i] < min_num:
-                        min_num = data.coords[i]
-                    elif data.coords[i] > max_num:
-                        max_num = data.coords[i]
-                
-                split = max_num - min_num
-                
-                if split > max_split:
-                    max_split = split
-                    split_coord = i
+        for i in range(self.k):
+            min_num = leaf.data[0].coords[i]
+            max_num = leaf.data[0].coords[i]
+            for data in leaf.data:
+                if data.coords[i] < min_num:
+                    min_num = data.coords[i]
+                elif data.coords[i] > max_num:
+                    max_num = data.coords[i]
+            
+            split = max_num - min_num
+            
+            if split > max_split:
+                max_split = split
+                split_coord = i
         
         return self.sort_split(leaf.data, split_coord)
         
