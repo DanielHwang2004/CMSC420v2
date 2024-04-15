@@ -137,7 +137,7 @@ class KDtree():
                 
                 prev = curr
                 
-                split_coord += 1
+                split_coord = prev.splitindex + 1
                 
                 if split_coord == self.k:
                     split_coord = 0
