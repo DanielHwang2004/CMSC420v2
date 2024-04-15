@@ -214,7 +214,6 @@ class KDtree():
             curr.data = [datum for datum in curr.data if datum.coords != point] 
             
             if len(curr.data) == 0:
-                print("c")
                 if prev == None:
                     self.root = None
                 elif prev_prev == None:
