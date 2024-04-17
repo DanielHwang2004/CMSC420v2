@@ -237,15 +237,135 @@ class KDtree():
     # The Datum with the given point is guaranteed to be in the tree.
     def delete(self,point:tuple[int]):
         self.delete_helper(None, None, None, None, self.root, point)
-                
+        
+    def node_list(self, node:(NodeInternal | NodeLeaf)):
+        
+        if isinstance(node, NodeInternal):
+            return self.node_list(node.leftchild) + self.node_list(node.rightchild)
+        else:
+            return [datum.coords for datum in node.data]
+        
+    def datum_list(self, node:(NodeInternal | NodeLeaf)):
+        
+        if isinstance(node, NodeInternal):
+            return self.node_list(node.leftchild) + self.node_list(node.rightchild)
+        else:
+            return [datum for datum in node.data]
 
+    def b_b_dist(self, node, point:tuple[int]) -> int:
+        
+        node_list = self.node_list(node)
+        
+        min_list = [min(coord) for coord in zip(*node_list)]
+        max_list = [max(coord) for coord in zip(*node_list)]
+        
+        res = 0
+        
+        for i in range(len(min_list)):
+            if point[i] < min_list[i]:
+                res += (min_list[i] - point[i])**2
+            elif point[i] > max_list[i]:
+                res += (point[i] - max_list[i])**2
+        
+        return res
+    
+    def point_dist(self, datum, point):
+        res = 0
+        
+        for i in range(len(datum.coords)):
+            res += (datum.coords[i] - point[i])**2
+            
+        return res
+        
+    def max_e_d(self, k_list, point):
+        dist = 0
+        data = None
+        
+        for datum in k_list:
+            if self.point_dist(datum, point) == dist:
+                if data:
+                    if datum.code > data.code:
+                        data = datum
+                else:
+                    data = datum
+            elif self.point_dist(datum, point) > dist:
+                data = datum
+                dist = self.point_dist(datum, point)
+        
+        return (data, dist)
+                
+    def knn_helper(self, node:(NodeInternal | NodeLeaf), k:int, point:tuple[int], leaveschecked:int, knnlist, dist:int):
+        
+        l_c = leaveschecked
+        k_list = knnlist
+        d = dist
+        
+        if isinstance(node, NodeInternal):
+            left_d = self.b_b_dist(node.leftchild, point)
+            right_d = self.b_b_dist(node.rightchild, point)
+            
+            if left_d > right_d:
+                if right_d <= d:
+                    (l_c, k_list, d) = self.knn_helper(node.rightchild, k, point, l_c, k_list, d)
+                    
+                    if left_d <= d:
+                        (l_c, k_list, d) = self.knn_helper(node.leftchild, k, point, l_c, k_list, d)
+            elif left_d <= d:
+                (l_c, k_list, d) = self.knn_helper(node.leftchild, k, point, l_c, k_list, d)
+                
+                if right_d <= d:
+                    (l_c, k_list, d) = self.knn_helper(node.rightchild, k, point, l_c, k_list, d)
+        else:
+            l_c += 1
+            
+            datum_list = self.datum_list(node)
+            
+            if len(k_list) < k:
+                while len(k_list) < k and datum_list != []:
+                    k_list.append(datum_list.pop())
+
+                if (len(k_list) == k):
+                    (_, d) = self.max_e_d(k_list, point)
+                    
+                while datum_list != []:
+                    check = datum_list.pop()
+                    
+                    if self.point_dist(check, point) < d:
+                        (remove, _) = self.max_e_d(k_list, point)
+                        d = self.point_dist(check, point)
+                        k_list.remove(remove)
+                        k_list.append(check)
+                    elif self.point_dist(check, point) == d:
+                        (remove, _) = self.max_e_d(k_list, point)
+                        if remove.code > check.code:
+                            k_list.remove(remove)
+                            k_list.append(check)
+            else:
+                while datum_list != []:
+                    check = datum_list.pop()
+                    
+                    if self.point_dist(check, point) < d:
+                        (remove, _) = self.max_e_d(k_list, point)
+                        d = self.point_dist(check, point)
+                        k_list.remove(remove)
+                        k_list.append(check)
+                    elif self.point_dist(check, point) == d:
+                        (remove, _) = self.max_e_d(k_list, point)
+                        if remove.code > check.code:
+                            k_list.remove(remove)
+                            k_list.append(check)
+            
+        
+        return (l_c, k_list, d)
+    
     # Find the k nearest neighbors to the point.
     def knn(self,k:int,point:tuple[int]) -> str:
         # Use the strategy discussed in class and in the notes.
         # The list should be a list of elements of type Datum.
         # While recursing, count the number of leaf nodes visited while you construct the list.
         # The following lines should be replaced by code that does the job.
-        leaveschecked = 0
-        knnlist = []
+        
+        (leaveschecked, knnlist, _) = self.knn_helper(self.root, k, point, 0, [], int(1e100))
+        
         # The following return line can probably be left alone unless you make changes in variable names.
         return(json.dumps({"leaveschecked":leaveschecked,"points":[datum.to_json() for datum in knnlist]},indent=2))
