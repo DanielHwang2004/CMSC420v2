@@ -94,7 +94,65 @@ class SkipList():
     # The key is guaranteed to not be in the skiplist.
     # Check if we need to rebuild and do so if needed.
     def insert(self,key,value,toplevel):
-        print('Placeholder')
+        
+        if not self.nodecount:
+            self.nodecount = 0
+            
+        self.nodecount += 1
+        
+        
+        
+        if math.log2(self.nodecount) + 1 > self.maxlevel:
+            self.maxlevel = self.maxlevel * 2
+            
+            key_value_list = []
+            
+            curr = self.headnode.pointers[0]
+            while curr.key < key:
+                key_value_list.append((curr.key, curr.value))
+                curr = curr.pointers[0]
+            
+            key_value_list.append((key, value))
+            
+            while curr.key < float('inf'):
+                key_value_list.append((curr.key, curr.value))
+                curr = curr.pointers[0]
+            
+            self.initialize(self.maxlevel)
+            
+            for i, (key, value) in enumerate(key_value_list):
+                level_check = i + 1
+                level = 0
+                
+                while (level_check % 2 == 0) and level < self.maxlevel:
+                    level += 1
+                    level_check /= 2
+                
+                self.insert(key, value, level)
+                
+        else:
+            add = Node(key, value, toplevel, [])
+            
+            pointer_list = [None] * (toplevel + 1)
+            
+            curr = self.headnode
+            
+            while curr.key < key:
+                
+                for i in range(len(curr.pointers)):
+                    if i < toplevel + 1:
+                        pointer_list[i] = curr
+                    else:
+                        break
+                    
+                curr = curr.pointers[0]
+            
+            for i, pointer in enumerate(pointer_list):
+                save = pointer.pointers[i]
+                
+                pointer.pointers[i] = add
+                
+                add.pointers.append(save)
 
     # Delete node with the given key.
     # The key is guaranteed to be in the skiplist.
