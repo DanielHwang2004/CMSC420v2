@@ -200,11 +200,39 @@ class SkipList():
     # Delete node with the given key.
     # The key is guaranteed to be in the skiplist.
     def delete(self,key):
-        print('Placeholder')
+        pointer_list = []
+        
+        for i in range(self.maxlevel + 1):
+            curr = self.headnode
+            
+            while curr.pointers[i] and curr.pointers[i].key != key:
+                curr = curr.pointers[i]
+                
+            if curr.pointers[i]:
+                pointer_list.append((curr, i))
+            else:
+                break
+        
+        for (node, level) in pointer_list:
+            node.pointers[level] = node.pointers[level].pointers[level]
 
     # Search for the given key.
     # Construct a list of all the keys in all the nodes visited during the search.
     # Append the value associated to the given key to this list.
     def search(self,key) -> str:
-        A = ['your list gets constructed here']
+        A = []
+        
+        curr = self.headnode
+        level = self.maxlevel
+        
+        while curr.key != key:
+            if curr.pointers[level].key > key:
+                level -= 1
+            else:
+                A.append(curr.key)
+                curr = curr.pointers[level]
+        
+        A.append(curr.key)
+        A.append(curr.value)
+        
         return json.dumps(A,indent = 2)
