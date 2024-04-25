@@ -215,6 +215,8 @@ class SkipList():
         
         for (node, level) in pointer_list:
             node.pointers[level] = node.pointers[level].pointers[level]
+            
+        self.nodecount -= 1
 
     # Search for the given key.
     # Construct a list of all the keys in all the nodes visited during the search.
