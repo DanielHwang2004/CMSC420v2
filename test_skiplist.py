@@ -28,3 +28,5 @@ if __name__ == "__main__":
                 print(t.dump())
             if l[0] == 'pretty':
                 print(t.pretty())
+            if l[0] == 'poop':
+                t.print_skip_list()

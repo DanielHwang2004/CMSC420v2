@@ -74,6 +74,48 @@ class SkipList():
                 pretty = pretty + "\n"
             currentNode = currentNode.pointers[0]
         return(pretty)
+    
+    def print_skip_list(self):
+        # Customization
+        spacer_length, decimal_place = 4, 4
+        h_char, v_char, arrow_head = "-", "|", ">"
+
+        # Helper String
+        spacer = h_char * spacer_length
+        empty_spacer = " " * spacer_length
+        arrow = h_char * (spacer_length - 1) + arrow_head
+        delimiter = v_char + h_char * decimal_place + v_char
+
+        # Head node to string
+        lines = [""] * (self.maxlevel + 3)
+        for i in range(self.maxlevel + 1):
+            lines[i + 2] = v_char + f"{self.headnode.pointers[i].key:>{decimal_place}}" + v_char
+        lines[1] += delimiter
+        lines[0] += v_char + f'{self.headnode.key:>{decimal_place}}' + v_char
+
+        # Rest of the nodes to string
+        current_node = self.headnode.pointers[0]
+        while current_node is not None:
+            # Iterate through each pointer
+            for i in range(self.maxlevel + 1):
+                if i < len(current_node.pointers):
+                    # Node levels with pointers
+                    pointer = current_node.pointers[i]
+                    pointer_key = pointer.key if pointer else str(pointer)  # Edge case for tail node
+                    lines[i + 2] += arrow + v_char + f"{pointer_key:>{decimal_place}}" + v_char
+                else:
+                    # Node levels with no pointers
+                    lines[i + 2] += spacer + h_char * (decimal_place + 2)
+            # Reserve bottom two lines for this node's key
+            lines[1] += empty_spacer + delimiter
+            lines[0] += empty_spacer + v_char + f'{current_node.key:>{decimal_place}}' + v_char
+            current_node = current_node.pointers[0]
+
+        # Print Results
+        for line in reversed(lines):
+            print(line)
+
+        print("")
 
     # DO NOT MODIFY!
     # Initialize a skip list.
@@ -100,9 +142,8 @@ class SkipList():
             
         self.nodecount += 1
         
-        
-        
         if math.log2(self.nodecount) + 1 > self.maxlevel:
+            
             self.maxlevel = self.maxlevel * 2
             
             key_value_list = []
@@ -119,6 +160,7 @@ class SkipList():
                 curr = curr.pointers[0]
             
             self.initialize(self.maxlevel)
+            self.nodecount = 0
             
             for i, (key, value) in enumerate(key_value_list):
                 level_check = i + 1
@@ -153,6 +195,7 @@ class SkipList():
                 pointer.pointers[i] = add
                 
                 add.pointers.append(save)
+
 
     # Delete node with the given key.
     # The key is guaranteed to be in the skiplist.
