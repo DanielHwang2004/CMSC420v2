@@ -52,7 +52,7 @@ class Graph():
     def clustersign(self):
         # Replace the next two lines with your code.
         
-        fvec = self.fvec()
+        fvec = self.fiedlervector()
         
         pind = []
         nind = []
